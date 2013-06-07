@@ -85,7 +85,7 @@ void client_free(Client *client) {
 		shutdown(client->sock_watcher.fd, SHUT_WR);
 		close(client->sock_watcher.fd);
 	}
-    //free(client->latency);
+    free(client->latency);
 	free(client);
 }
 
