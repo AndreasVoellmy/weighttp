@@ -70,11 +70,12 @@ Client *client_new(Worker *worker) {
 	client->chunk_size = -1;
 	client->chunk_received = 0;
     
-    client->size_latency = worker->stats.req_todo / worker->config->latency_sample_interval;
-    printf("client->size_latency: %d\n", client->size_latency);
-    client->latency =
-        (struct timeval *) calloc(client->size_latency, sizeof(struct timeval));
-    client->current_sample = 0;
+	client->size_latency = worker->stats.req_todo / worker->config->latency_sample_interval;
+	printf("client->size_latency: %d\n", client->size_latency);
+	client->latency =
+	  (struct timeval *) calloc(client->size_latency, sizeof(struct timeval));
+	client->current_sample = 0;
+	client->request_count = 0;
 
 	return client;
 }
@@ -85,8 +86,8 @@ void client_free(Client *client) {
 		shutdown(client->sock_watcher.fd, SHUT_WR);
 		close(client->sock_watcher.fd);
 	}
-    free(client->latency);
 	free(client);
+	free(client->latency);
 }
 
 static void client_reset(Client *client) {
@@ -220,7 +221,10 @@ void client_state_machine(Client *client) {
 						/* whole request was sent, start reading */
 						client->state = CLIENT_READING;
 						client_set_events(client, EV_READ);
-                        gettimeofday(&(client->latency[client->current_sample]),NULL);
+						if ( client->request_count % client->worker->config->latency_sample_interval == 0 
+						     && client->current_sample < client->size_latency) {
+						  gettimeofday(&(client->latency[client->current_sample]),NULL);
+						}
 					}
 
 					return;
@@ -262,13 +266,15 @@ void client_state_machine(Client *client) {
 						if (client->state == CLIENT_END) {
                             struct timeval start;
                             struct timeval end;
-                            if (client->current_sample < client->size_latency) {
-                                start = client->latency[client->current_sample];
-                                gettimeofday(&end,NULL);
-                                timersub(&end, &start, &(client->latency[client->current_sample]));
-                                client->current_sample++;
+                            if (client->request_count % client->worker->config->latency_sample_interval == 0 
+				&& client->current_sample < client->size_latency) {
+			      start = client->latency[client->current_sample];
+			      gettimeofday(&end,NULL);
+			      timersub(&end, &start, &(client->latency[client->current_sample]));
+			      client->current_sample++;
                             }
-							goto start;
+			    client->request_count++;
+			    goto start;
                         }
 						else
 							return;

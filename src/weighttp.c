@@ -384,6 +384,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	FILE *file;
+	file = fopen("latency.dat","a+");
+
 	for (i = 0; i < config.thread_count; i++) {
 		err = pthread_join(threads[i], NULL);
 		worker = workers[i];
@@ -406,20 +409,20 @@ int main(int argc, char *argv[]) {
         
         // for each client of the worker:
         // write latency up to current_sample to stdout.
-        
+
         for (cc=0; cc < worker->num_clients; cc++){
             client = worker->clients[cc];
             struct timeval sample;
             int j;
             for(j=0; j < client->current_sample; j++) {
                 sample = client->latency[j];
-                printf("%ld  j: %d\n", sample.tv_sec * 1000000 + sample.tv_usec, j);
+                fprintf(file,"%ld\n", sample.tv_sec * 1000000 + sample.tv_usec);
             }
-        }
+	}
 
 		worker_free(worker);
 	}
-
+	fclose(file);
 	ts_end = ev_time();
 	duration = ts_end - ts_start;
 	sec = duration;
