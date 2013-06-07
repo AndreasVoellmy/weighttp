@@ -71,6 +71,7 @@ Client *client_new(Worker *worker) {
 	client->chunk_received = 0;
     
     client->size_latency = worker->stats.req_todo / worker->config->latency_sample_interval;
+    printf("client->size_latency: %d\n", client->size_latency);
     client->latency =
         (struct timeval *) calloc(client->size_latency, sizeof(struct timeval));
     client->current_sample = 0;
