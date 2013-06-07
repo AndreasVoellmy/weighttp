@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
 	config.keep_alive = 0;
     config.latency_sample_interval = -1; 
 
-	while ((c = getopt(argc, argv, ":hv6kn:t:c:H:")) != -1) {
+	while ((c = getopt(argc, argv, ":hv6kn:t:c:l:H:")) != -1) {
 		switch (c) {
 			case 'h':
 				show_help();
