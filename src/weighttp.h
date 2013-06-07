@@ -27,6 +27,8 @@
 #include <ev.h>
 #include <pthread.h>
 
+#include <sys/time.h>
+
 #define CLIENT_BUFFER_SIZE 32 * 1024
 
 #define W_MALLOC(t, n) ((t*) calloc((n), sizeof(t)))
@@ -56,6 +58,8 @@ struct Config {
 	char *request;
 	uint32_t request_size;
 	struct addrinfo *saddr;
+    
+    int latency_sample_interval;
 };
 
 uint64_t str_to_uint64(char *str);

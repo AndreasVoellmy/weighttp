@@ -41,6 +41,10 @@ struct Client {
 	uint64_t bytes_received; /* including http header */
 	uint16_t header_size;
 
+    struct timeval *latency; // pointer to array of latency samples
+    int size_latency;        // size of the *latency array.
+    int current_sample;      // we are currently working on sample #.
+    
 	char buffer[CLIENT_BUFFER_SIZE];
 };
 

@@ -234,7 +234,9 @@ int main(int argc, char *argv[]) {
 	uint64_t kbps;
 	char **headers;
 	uint8_t headers_num;
-
+    int cc=0;
+    Client * client;
+    
 	printf("weighttp - a lightweight and simple webserver benchmarking tool\n\n");
 
 	headers = NULL;
@@ -246,6 +248,7 @@ int main(int argc, char *argv[]) {
 	config.concur_count = 1;
 	config.req_count = 0;
 	config.keep_alive = 0;
+    config.latency_sample_interval = 100; // TODO: take this from command line.
 
 	while ((c = getopt(argc, argv, ":hv6kn:t:c:H:")) != -1) {
 		switch (c) {
@@ -400,6 +403,19 @@ int main(int argc, char *argv[]) {
 		stats.req_3xx += worker->stats.req_3xx;
 		stats.req_4xx += worker->stats.req_4xx;
 		stats.req_5xx += worker->stats.req_5xx;
+        
+        // for each client of the worker:
+        // write latency up to current_sample to stdout.
+        
+        for (cc=0; cc < worker->num_clients; cc++){
+            client = worker->clients[cc];
+            struct timeval sample;
+            int j;
+            for(j=0; j < client->current_sample; j++) {
+                sample = client->latency[j];
+                printf("%ld\n", sample.tv_sec * 1000000 + sample.tv_usec);
+            }
+        }
 
 		worker_free(worker);
 	}

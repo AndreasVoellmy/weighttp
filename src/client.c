@@ -69,6 +69,11 @@ Client *client_new(Worker *worker) {
 	client->chunked = 0;
 	client->chunk_size = -1;
 	client->chunk_received = 0;
+    
+    client->size_latency = worker->stats.req_todo / worker->config->latency_sample_interval;
+    client->latency =
+        (struct timeval *) calloc(client->size_latency, sizeof(struct timeval));
+    client->current_sample = 0;
 
 	return client;
 }
@@ -79,7 +84,7 @@ void client_free(Client *client) {
 		shutdown(client->sock_watcher.fd, SHUT_WR);
 		close(client->sock_watcher.fd);
 	}
-
+    free(client->latency);
 	free(client);
 }
 
@@ -214,6 +219,7 @@ void client_state_machine(Client *client) {
 						/* whole request was sent, start reading */
 						client->state = CLIENT_READING;
 						client_set_events(client, EV_READ);
+                        gettimeofday(&(client->latency[client->current_sample]),NULL);
 					}
 
 					return;
@@ -252,8 +258,15 @@ void client_state_machine(Client *client) {
 						//printf("parser failed\n");
 						break;
 					} else {
-						if (client->state == CLIENT_END)
+						if (client->state == CLIENT_END) {
+                            struct timeval start;
+                            struct timeval end;
+                            start = client->latency[client->current_sample];
+                            gettimeofday(&end,NULL);
+                            timersub(&end, &start, &(client->latency[client->current_sample]));
+                            client->current_sample++;
 							goto start;
+                        }
 						else
 							return;
 					}
