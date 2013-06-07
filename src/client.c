@@ -262,10 +262,12 @@ void client_state_machine(Client *client) {
 						if (client->state == CLIENT_END) {
                             struct timeval start;
                             struct timeval end;
-                            start = client->latency[client->current_sample];
-                            gettimeofday(&end,NULL);
-                            timersub(&end, &start, &(client->latency[client->current_sample]));
-                            client->current_sample++;
+                            if (client->current_sample < client->size_latency) {
+                                start = client->latency[client->current_sample];
+                                gettimeofday(&end,NULL);
+                                timersub(&end, &start, &(client->latency[client->current_sample]));
+                                client->current_sample++;
+                            }
 							goto start;
                         }
 						else
