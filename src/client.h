@@ -57,4 +57,7 @@ Client *client_new(Worker *worker);
 void client_free(Client *client);
 void client_state_machine(Client *client);
 
+
+// Constant defining the mean sampling frequency - i.e. roughly 1/P requests
+// are sampled.
 #define P 0.01

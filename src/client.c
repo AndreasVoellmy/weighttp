@@ -224,23 +224,22 @@ void client_state_machine(Client *client) {
 					/* success */
 					client->request_offset += r;
 					if (client->request_offset == config->request_size) {
-						/* whole request was sent, start reading */
-						client->state = CLIENT_READING;
-						client_set_events(client, EV_READ);
-						if ( client->worker->config->latency_sample_interval != -1 ) { // latency sampling is ON
-						  if (client->current_sample < client->size_latency) {         // still have room in latency sample array
-						    double coinFlip = drand48();
-						    if (coinFlip < P) {
-						      client->waiting_for_response = 1;
-						    }
-						    /* if ( client->request_count % client->worker->config->latency_sample_interval == 0) {
-						      client->waiting_for_response = 1;
-						      } */
-						  }
-						  if ( client->waiting_for_response==1) {
-						    gettimeofday(&(client->latency[client->current_sample]),NULL);
-						  }
-						}
+                                          /* whole request was sent, start reading */
+                                          client->state = CLIENT_READING;
+                                          client_set_events(client, EV_READ);
+                                          if ( client->worker->config->latency_sample_interval != -1 ) { 
+                                            // latency sampling is ON
+                                            if (client->current_sample < client->size_latency) {         
+                                              // still have room in latency sample array
+                                              double coinFlip = drand48();
+                                              if (coinFlip < P) {
+                                                client->waiting_for_response = 1;
+                                              }
+                                            }
+                                            if ( client->waiting_for_response==1) {
+                                              gettimeofday(&(client->latency[client->current_sample]),NULL);
+                                            }
+                                          }
 					}
 
 					return;
