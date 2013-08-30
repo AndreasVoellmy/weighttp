@@ -420,7 +420,8 @@ int main(int argc, char *argv[]) {
 				int j;
 				for(j=0; j < client->current_sample; j++) {
 					sample = client->latency[j];
-					fprintf(file,"%ld\n", sample.tv_sec * 1000000 + sample.tv_usec);
+					fprintf(file,"%ld\n",sample.tv_sec * 1000000 + sample.tv_usec);
+					//fprintf(file,"%d %d %ld\n", i,cc,sample.tv_sec * 1000000 + sample.tv_usec);
 				}
 			}
 			fclose(file);

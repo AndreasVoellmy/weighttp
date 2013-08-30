@@ -8,6 +8,9 @@
  *     MIT, see COPYING file
  */
 
+
+#include <stdlib.h>
+
 struct Client {
 	enum {
 		CLIENT_START,
@@ -44,6 +47,7 @@ struct Client {
   struct timeval *latency; // pointer to array of latency samples
   int size_latency;        // size of the *latency array.
   int current_sample;      // we are currently working on sample #.
+  int waiting_for_response;
   int request_count;
     
 	char buffer[CLIENT_BUFFER_SIZE];
@@ -52,3 +56,5 @@ struct Client {
 Client *client_new(Worker *worker);
 void client_free(Client *client);
 void client_state_machine(Client *client);
+
+#define P 0.01

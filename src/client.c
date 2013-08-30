@@ -10,6 +10,8 @@
 
 #include "weighttp.h"
 
+
+
 static uint8_t client_parse(Client *client, int size);
 static void client_io_cb(struct ev_loop *loop, ev_io *w, int revents);
 static void client_set_events(Client *client, int events);
@@ -76,6 +78,7 @@ Client *client_new(Worker *worker) {
 	        (struct timeval *) calloc(client->size_latency, sizeof(struct timeval));
         }
 	client->current_sample = 0;
+	client->waiting_for_response = 0;
 	client->request_count = 0;
 
 	return client;
@@ -224,11 +227,19 @@ void client_state_machine(Client *client) {
 						/* whole request was sent, start reading */
 						client->state = CLIENT_READING;
 						client_set_events(client, EV_READ);
-						if ( client->worker->config->latency_sample_interval != -1 ) {
-							if ( client->request_count % client->worker->config->latency_sample_interval == 0 
-									&& client->current_sample < client->size_latency) {
-								gettimeofday(&(client->latency[client->current_sample]),NULL);
-							}
+						if ( client->worker->config->latency_sample_interval != -1 ) { // latency sampling is ON
+						  if (client->current_sample < client->size_latency) {         // still have room in latency sample array
+						    double coinFlip = drand48();
+						    if (coinFlip < P) {
+						      client->waiting_for_response = 1;
+						    }
+						    /* if ( client->request_count % client->worker->config->latency_sample_interval == 0) {
+						      client->waiting_for_response = 1;
+						      } */
+						  }
+						  if ( client->waiting_for_response==1) {
+						    gettimeofday(&(client->latency[client->current_sample]),NULL);
+						  }
 						}
 					}
 
@@ -272,12 +283,12 @@ void client_state_machine(Client *client) {
 							if ( client->worker->config->latency_sample_interval != -1 ) {
 								struct timeval start;
 								struct timeval end;
-								if (client->request_count % client->worker->config->latency_sample_interval == 0 
-										&& client->current_sample < client->size_latency) {
+								if (client->waiting_for_response == 1) {
 									start = client->latency[client->current_sample];
 									gettimeofday(&end,NULL);
 									timersub(&end, &start, &(client->latency[client->current_sample]));
 									client->current_sample++;
+									client->waiting_for_response = 0;
 								}
 								client->request_count++;
 							}
